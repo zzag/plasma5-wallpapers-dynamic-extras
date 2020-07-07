@@ -68,14 +68,14 @@ def extract_metadata(input_file):
     return plist_metadata
 
 
-def prepare_images(input_file, working_directory):
-    template_file = os.path.join(working_directory, 'image.png')
+def prepare_images(input_file, working_directory, options):
+    template_file = os.path.join(working_directory, 'image.%s' % options['format'])
     heifconvert_cmd = subprocess.Popen(['heif-convert', input_file, template_file])
     heifconvert_cmd.wait()
 
 
-def make_image_filename(working_directory, index):
-    return os.path.join(working_directory, 'image-%i.png' % (index + 1))
+def make_image_filename(working_directory, index, options):
+    return os.path.join(working_directory, 'image-%i.%s' % (index + 1, options['format']))
 
 
 def make_metadata_filename(working_directory):
@@ -93,7 +93,7 @@ def prepare_solar_metadata_helper(metadata, working_directory, options):
     result['SolarAzimuth'] = metadata['z']
     result['Time'] = '00:00' # whatever...
     result['CrossFade'] = options['crossfade']
-    result['FileName'] = make_image_filename(working_directory, metadata['i'])
+    result['FileName'] = make_image_filename(working_directory, metadata['i'], options)
     return result
 
 
@@ -105,7 +105,7 @@ def prepare_timed_metadata_helper(metadata, working_directory, options):
     result = dict()
     result['Time'] = time_from_real(metadata['t']).strftime('%H:%M')
     result['CrossFade'] = options['crossfade']
-    result['FileName'] = make_image_filename(working_directory, metadata['i'])
+    result['FileName'] = make_image_filename(working_directory, metadata['i'], options)
     return result
 
 
@@ -136,16 +136,19 @@ parser.add_argument('--output', default='wallpaper.heic',
 parser.add_argument('file', help='input file')
 parser.add_argument('--crossfade', default=False, action='store_true',
                     help='allow cross fading between images')
+parser.add_argument('--intermediate-format', default='jpg',
+                    help='intermediate image file format (jpg or png)')
 args = parser.parse_args()
 
 input_file = args.file
 output_file = args.output
 
 options = {
-    'crossfade': args.crossfade
+    'crossfade': args.crossfade,
+    'format': args.intermediate_format
 }
 
 with tempfile.TemporaryDirectory() as working_directory:
     prepare_metadata(input_file, working_directory, options)
-    prepare_images(input_file, working_directory)
+    prepare_images(input_file, working_directory, options)
     build_wallpaper(working_directory, output_file)
