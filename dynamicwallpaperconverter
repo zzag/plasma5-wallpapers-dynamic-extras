@@ -136,8 +136,8 @@ parser.add_argument('--output', default='wallpaper.heic',
 parser.add_argument('file', help='input file')
 parser.add_argument('--crossfade', default=False, action='store_true',
                     help='allow cross fading between images')
-parser.add_argument('--intermediate-format', default='jpg',
-                    help='intermediate image file format (jpg or png)')
+parser.add_argument('--intermediate-format', default='jpg', choices=('jpg', 'png'),
+                    help='intermediate image file format')
 args = parser.parse_args()
 
 input_file = args.file
