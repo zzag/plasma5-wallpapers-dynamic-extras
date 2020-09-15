@@ -140,7 +140,7 @@ parser.add_argument('--crossfade', default=False, action='store_true',
 parser.add_argument('--intermediate-format', default='jpg', choices=('jpg', 'png'),
                     help='intermediate image file format')
 parser.add_argument('--quality', default=100, type=int,
-                    help='desired quality of the encoded images (from 0 to 100)')
+                    help='desired quality of the encoded images (from 1 to 100)')
 args = parser.parse_args()
 
 input_file = args.file
