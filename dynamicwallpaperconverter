@@ -126,21 +126,18 @@ def prepare_metadata(input_file, working_directory, options):
 
 def build_wallpaper(working_directory, output_file, options):
     metadata_file = make_metadata_filename(working_directory)
-    builder_cmd = subprocess.Popen(['kdynamicwallpaperbuilder', '--output', output_file,
-                                    '--quality', str(options['quality']), metadata_file])
+    builder_cmd = subprocess.Popen(['kdynamicwallpaperbuilder', '--output', output_file, metadata_file])
     builder_cmd.wait()
 
 
 parser = argparse.ArgumentParser(description='dynamic wallpaper importer')
-parser.add_argument('--output', default='wallpaper.heic',
+parser.add_argument('--output', default='wallpaper.avif',
                     help='file where the result will be written')
 parser.add_argument('file', help='input file')
 parser.add_argument('--crossfade', default=False, action='store_true',
                     help='allow cross fading between images')
 parser.add_argument('--intermediate-format', default='jpg', choices=('jpg', 'png'),
                     help='intermediate image file format')
-parser.add_argument('--quality', default=100, type=int,
-                    help='desired quality of the encoded images (from 1 to 100)')
 args = parser.parse_args()
 
 input_file = args.file
@@ -149,7 +146,6 @@ output_file = args.output
 options = {
     'crossfade': args.crossfade,
     'format': args.intermediate_format,
-    'quality': args.quality
 }
 
 with tempfile.TemporaryDirectory() as working_directory:
