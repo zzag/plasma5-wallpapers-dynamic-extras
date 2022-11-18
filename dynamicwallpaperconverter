@@ -126,7 +126,10 @@ def prepare_metadata(input_file, working_directory, options):
 
 def build_wallpaper(working_directory, output_file, options):
     metadata_file = make_metadata_filename(working_directory)
-    builder_cmd = subprocess.Popen(['kdynamicwallpaperbuilder', '--output', output_file, metadata_file])
+    builder_cmd = subprocess.Popen(['kdynamicwallpaperbuilder',
+                                    '--output', output_file,
+                                    '--speed', options['speed'],
+                                    metadata_file])
     builder_cmd.wait()
 
 
@@ -138,6 +141,8 @@ parser.add_argument('--crossfade', default=False, action='store_true',
                     help='allow cross fading between images')
 parser.add_argument('--intermediate-format', default='jpg', choices=('jpg', 'png'),
                     help='intermediate image file format')
+parser.add_argument('--speed', default='5',
+                    help='conversion speed, affects file size (0 - slow, 10 - fast)')
 args = parser.parse_args()
 
 input_file = args.file
@@ -146,6 +151,7 @@ output_file = args.output
 options = {
     'crossfade': args.crossfade,
     'format': args.intermediate_format,
+    'speed': args.speed
 }
 
 with tempfile.TemporaryDirectory() as working_directory:
