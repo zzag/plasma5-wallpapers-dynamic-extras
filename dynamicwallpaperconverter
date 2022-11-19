@@ -54,18 +54,21 @@ def extract_base64_metadata(input_file):
     stdout_data = str(grep_cmd.communicate()[0])
     match = re.search(r'apple_desktop:solar="([A-Za-z0-9\+\/]+[=]{0,2})"', stdout_data)
     if match:
-        return match.group(1)
+        return "solar", match.group(1)
     match = re.search(r'apple_desktop:h24="([A-Za-z0-9\+\/]+[=]{0,2})"', stdout_data)
     if match:
-        return match.group(1)
+        return "h24", match.group(1)
+    match = re.search(r'apple_desktop:apr="([A-Za-z0-9\+\/]+[=]{0,2})"', stdout_data)
+    if match:
+        return "apr", match.group(1)
     raise MetadataException("No metadata found")
 
 
 def extract_metadata(input_file):
-    base64_metadata = extract_base64_metadata(input_file)
+    kind, base64_metadata = extract_base64_metadata(input_file)
     blob_metadata = base64.b64decode(base64_metadata)
     plist_metadata = plistlib.loads(blob_metadata)
-    return plist_metadata
+    return kind, plist_metadata
 
 
 def prepare_images(input_file, working_directory, options):
@@ -98,10 +101,13 @@ def prepare_solar_metadata_helper(metadata, working_directory, options):
 
 
 def prepare_solar_metadata(metadata, wd, options):
-    return list(map(lambda item: prepare_solar_metadata_helper(item, wd, options), metadata))
+    result = dict()
+    result['Type'] = 'solar'
+    result['Meta'] = list(map(lambda item: prepare_solar_metadata_helper(item, wd, options), metadata['si']))
+    return result
 
 
-def prepare_timed_metadata_helper(metadata, working_directory, options):
+def prepare_h24_metadata_helper(metadata, working_directory, options):
     result = dict()
     result['Time'] = time_from_real(metadata['t']).strftime('%H:%M')
     result['CrossFade'] = options['crossfade']
@@ -109,16 +115,38 @@ def prepare_timed_metadata_helper(metadata, working_directory, options):
     return result
 
 
-def prepare_timed_metadata(metadata, wd, options):
-    return list(map(lambda item: prepare_timed_metadata_helper(item, wd, options), metadata))
+def prepare_h24_metadata(metadata, wd, options):
+    result = dict()
+    result['Type'] = 'solar'
+    result['Meta'] = list(map(lambda item: prepare_timed_metadata_helper(item, wd, options), metadata['ti']))
+    return result
+
+
+def prepare_apr_metadata(metadata, wd, options):
+    light = dict()
+    light['TimeOfDay'] = 'day'
+    light['FileName'] = make_image_filename(wd, metadata['l'], options)
+
+    dark = dict()
+    dark['TimeOfDay'] = 'night'
+    dark['FileName'] = make_image_filename(wd, metadata['d'], options)
+
+    result = dict()
+    result['Type'] = 'day-night'
+    result['Meta'] = [light, dark]
+    return result
 
 
 def prepare_metadata(input_file, working_directory, options):
-    metadata = extract_metadata(input_file)
-    if 'si' in metadata:
-        converted_metadata = prepare_solar_metadata(metadata['si'], working_directory, options)
+    kind, metadata = extract_metadata(input_file)
+    if kind == 'solar':
+        converted_metadata = prepare_solar_metadata(metadata, working_directory, options)
+    elif kind == 'h24':
+        converted_metadata = prepare_h24_metadata(metadata, working_directory, options)
+    elif kind == 'apr':
+        converted_metadata = prepare_apr_metadata(metadata, working_directory, options)
     else:
-        converted_metadata = prepare_timed_metadata(metadata['ti'], working_directory, options)
+        raise MetadataException("No metadata found")
 
     with open(make_metadata_filename(working_directory), 'w') as f:
         json.dump(converted_metadata, f)
