@@ -118,7 +118,7 @@ def prepare_h24_metadata_helper(metadata, working_directory, options):
 def prepare_h24_metadata(metadata, wd, options):
     result = dict()
     result['Type'] = 'solar'
-    result['Meta'] = list(map(lambda item: prepare_timed_metadata_helper(item, wd, options), metadata['ti']))
+    result['Meta'] = list(map(lambda item: prepare_h24_metadata_helper(item, wd, options), metadata['ti']))
     return result
 
 
